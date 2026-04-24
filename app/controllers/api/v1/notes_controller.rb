@@ -2,7 +2,7 @@ class Api::V1::NotesController < ApplicationController
   before_action :set_note, only: [:update, :destroy]
 
   def index
-    notes = Note.order(created_at: :desc).page(params[:page]).per(20)
+    notes = Note.order(created_at: :desc).page(params[:page]).per(3)
 
     render json: {
       notes: notes,

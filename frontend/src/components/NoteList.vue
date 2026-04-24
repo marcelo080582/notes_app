@@ -1,26 +1,41 @@
 <template>
-  <div>
+  <div class="notes-section">
     <h2>Anotações</h2>
 
-    <p v-if="loading">Carregando...</p>
-    <p v-if="error">{{ error }}</p>
+    <p class="loading" v-if="loading">Carregando anotações...</p>
 
-    <div v-if="notes.length === 0 && !loading">
+    <p class="error" v-if="error">
+      {{ error }}
+    </p>
+
+    <p class="success" v-if="successMessage">
+      {{ successMessage }}
+    </p>
+
+    <div class="empty-state" v-if="notes.length === 0 && !loading">
       Nenhuma anotação encontrada.
     </div>
 
     <div class="notes-grid">
       <div class="note-card" v-for="note in notes" :key="note.id">
         <h3>{{ note.title }}</h3>
-        <p>{{ note.content }}</p>
+        <p>{{ note.content || 'Sem conteúdo.' }}</p>
 
         <div class="actions">
-          <button @click="editNote(note)" class="edit-btn">
+          <button
+            @click="editNote(note)"
+            class="edit-btn"
+            :disabled="deletingId === note.id"
+          >
             Editar
           </button>
 
-          <button @click="deleteNote(note.id)" class="delete-btn">
-            Excluir
+          <button
+            @click="deleteNote(note.id)"
+            class="delete-btn"
+            :disabled="deletingId === note.id"
+          >
+            {{ deletingId === note.id ? 'Excluindo...' : 'Excluir' }}
           </button>
         </div>
       </div>
@@ -28,7 +43,7 @@
 
     <div class="pagination" v-if="totalPages > 1">
       <button
-        :disabled="currentPage === 1"
+        :disabled="currentPage === 1 || loading"
         @click="changePage(currentPage - 1)"
       >
         Anterior
@@ -37,7 +52,7 @@
       <span>Página {{ currentPage }} de {{ totalPages }}</span>
 
       <button
-        :disabled="currentPage === totalPages"
+        :disabled="currentPage === totalPages || loading"
         @click="changePage(currentPage + 1)"
       >
         Próxima
@@ -55,6 +70,8 @@ const emit = defineEmits(['edit-note'])
 const notes = ref([])
 const loading = ref(false)
 const error = ref(null)
+const successMessage = ref(null)
+const deletingId = ref(null)
 
 const currentPage = ref(1)
 const totalPages = ref(1)
@@ -62,6 +79,7 @@ const totalPages = ref(1)
 const fetchNotes = async (page = 1) => {
   loading.value = true
   error.value = null
+  successMessage.value = null
 
   try {
     const response = await api.get('/notes', {
@@ -83,6 +101,8 @@ const changePage = (page) => {
 }
 
 const editNote = (note) => {
+  error.value = null
+  successMessage.value = null
   emit('edit-note', note)
 }
 
@@ -91,11 +111,27 @@ const deleteNote = async (id) => {
 
   if (!confirmed) return
 
+  deletingId.value = id
+  error.value = null
+  successMessage.value = null
+
   try {
     await api.delete(`/notes/${id}`)
-    fetchNotes(currentPage.value)
+
+    successMessage.value = 'Nota excluída com sucesso.'
+
+    const shouldGoToPreviousPage =
+      notes.value.length === 1 && currentPage.value > 1
+
+    const nextPage = shouldGoToPreviousPage
+      ? currentPage.value - 1
+      : currentPage.value
+
+    await fetchNotes(nextPage)
   } catch (e) {
     error.value = 'Erro ao excluir anotação.'
+  } finally {
+    deletingId.value = null
   }
 }
 
@@ -109,6 +145,10 @@ defineExpose({
 </script>
 
 <style scoped>
+.notes-section {
+  margin-top: 20px;
+}
+
 .notes-grid {
   display: grid;
   gap: 15px;
@@ -120,29 +160,71 @@ defineExpose({
   border-radius: 8px;
 }
 
+.note-card h3 {
+  margin-top: 0;
+  word-break: break-word;
+}
+
+.note-card p {
+  word-break: break-word;
+}
+
 .actions {
   margin-top: 10px;
   display: flex;
   gap: 10px;
 }
 
+.edit-btn,
+.delete-btn,
+.pagination button {
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
 .edit-btn {
   background: #f1c40f;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
 }
 
 .delete-btn {
   background: #e74c3c;
   color: white;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .pagination {
   margin-top: 20px;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.loading {
+  color: #555;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+}
+
+.success {
+  color: green;
+  font-size: 14px;
+}
+
+.empty-state {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  color: #555;
 }
 </style>
