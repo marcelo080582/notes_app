@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>Criar Nota</h2>
+    <h2>{{ note ? 'Editar Nota' : 'Criar Nota' }}</h2>
 
     <form @submit.prevent="handleSubmit">
       <div>
@@ -12,9 +12,12 @@
       <div>
         <label>Conteúdo</label>
         <textarea v-model="content"></textarea>
+        <span v-if="errors.content">{{ errors.content }}</span>
       </div>
 
-      <button type="submit">Salvar</button>
+      <button type="submit">
+        {{ note ? 'Atualizar' : 'Salvar' }}
+      </button>
     </form>
 
     <p v-if="apiError">{{ apiError }}</p>
@@ -22,20 +25,41 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import api from '../services/api'
 
-const emit = defineEmits(['note-created'])
+const props = defineProps({
+  note: {
+    type: Object,
+    default: null
+  }
+})
+
+const emit = defineEmits(['note-created', 'note-updated'])
 
 const title = ref('')
 const content = ref('')
 const errors = ref({})
 const apiError = ref(null)
 
+watch(
+  () => props.note,
+  (newNote) => {
+    if (newNote) {
+      title.value = newNote.title
+      content.value = newNote.content || ''
+    } else {
+      title.value = ''
+      content.value = ''
+    }
+  },
+  { immediate: true }
+)
+
 const validate = () => {
   errors.value = {}
 
-  if (!title.value) {
+  if (!title.value.trim()) {
     errors.value.title = 'Título é obrigatório'
   } else if (title.value.length > 100) {
     errors.value.title = 'Máximo de 100 caracteres'
@@ -52,22 +76,32 @@ const handleSubmit = async () => {
   if (!validate()) return
 
   try {
-    await api.post('/notes', {
-      note: {
-        title: title.value,
-        content: content.value
-      }
-    })
+    if (props.note) {
+      await api.put(`/notes/${props.note.id}`, {
+        note: {
+          title: title.value,
+          content: content.value
+        }
+      })
+
+      emit('note-updated')
+    } else {
+      await api.post('/notes', {
+        note: {
+          title: title.value,
+          content: content.value
+        }
+      })
+
+      emit('note-created')
+    }
 
     title.value = ''
     content.value = ''
+    errors.value = {}
     apiError.value = null
-
-    emit('note-created')
-
-    alert('Nota criada com sucesso!')
   } catch (error) {
-    apiError.value = 'Erro ao criar nota'
+    apiError.value = 'Erro ao salvar nota.'
   }
 }
 </script>

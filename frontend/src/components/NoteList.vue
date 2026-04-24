@@ -14,9 +14,15 @@
         <strong>{{ note.title }}</strong>
         <p>{{ note.content }}</p>
 
-        <button @click="deleteNote(note.id)">
-          Excluir
-        </button>
+        <div>
+          <button @click="editNote(note)">
+            Editar
+          </button>
+
+          <button @click="deleteNote(note.id)">
+            Excluir
+          </button>
+        </div>
       </li>
     </ul>
 
@@ -43,6 +49,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '../services/api'
+
+const emit = defineEmits(['edit-note'])
 
 const notes = ref([])
 const loading = ref(false)
@@ -72,6 +80,10 @@ const fetchNotes = async (page = 1) => {
 
 const changePage = (page) => {
   fetchNotes(page)
+}
+
+const editNote = (note) => {
+  emit('edit-note', note)
 }
 
 const deleteNote = async (id) => {
