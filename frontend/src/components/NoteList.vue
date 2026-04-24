@@ -2,6 +2,17 @@
   <div class="notes-section">
     <h2>Anotações</h2>
 
+    <div class="search-box">
+      <label for="search">Pesquisar notas</label>
+
+      <input
+        id="search"
+        v-model="search"
+        type="text"
+        placeholder="Digite título ou conteúdo..."
+      />
+    </div>
+
     <p class="loading" v-if="loading">Carregando anotações...</p>
 
     <p class="error" v-if="error">
@@ -62,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import api from '../services/api'
 
 const emit = defineEmits(['edit-note'])
@@ -72,9 +83,12 @@ const loading = ref(false)
 const error = ref(null)
 const successMessage = ref(null)
 const deletingId = ref(null)
+const search = ref('')
 
 const currentPage = ref(1)
 const totalPages = ref(1)
+
+let searchTimeout = null
 
 const fetchNotes = async (page = 1) => {
   loading.value = true
@@ -83,7 +97,10 @@ const fetchNotes = async (page = 1) => {
 
   try {
     const response = await api.get('/notes', {
-      params: { page }
+      params: {
+        page,
+        q: search.value
+      }
     })
 
     notes.value = response.data.notes
@@ -95,6 +112,14 @@ const fetchNotes = async (page = 1) => {
     loading.value = false
   }
 }
+
+watch(search, () => {
+  clearTimeout(searchTimeout)
+
+  searchTimeout = setTimeout(() => {
+    fetchNotes(1)
+  }, 400)
+})
 
 const changePage = (page) => {
   fetchNotes(page)
@@ -147,6 +172,25 @@ defineExpose({
 <style scoped>
 .notes-section {
   margin-top: 20px;
+}
+
+.search-box {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.search-box label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 .notes-grid {
