@@ -1,26 +1,26 @@
 <template>
-  <div>
+  <div class="form-card">
     <h2>{{ note ? 'Editar Nota' : 'Criar Nota' }}</h2>
 
     <form @submit.prevent="handleSubmit">
-      <div>
+      <div class="form-group">
         <label>Título</label>
         <input v-model="title" type="text" />
-        <span v-if="errors.title">{{ errors.title }}</span>
+        <span class="error" v-if="errors.title">{{ errors.title }}</span>
       </div>
 
-      <div>
+      <div class="form-group">
         <label>Conteúdo</label>
         <textarea v-model="content"></textarea>
-        <span v-if="errors.content">{{ errors.content }}</span>
+        <span class="error" v-if="errors.content">{{ errors.content }}</span>
       </div>
 
-      <button type="submit">
+      <button type="submit" class="primary-btn">
         {{ note ? 'Atualizar' : 'Salvar' }}
       </button>
     </form>
 
-    <p v-if="apiError">{{ apiError }}</p>
+    <p class="error" v-if="apiError">{{ apiError }}</p>
   </div>
 </template>
 
@@ -105,3 +105,41 @@ const handleSubmit = async () => {
   }
 }
 </script>
+
+<style scoped>
+.form-card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+.primary-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.primary-btn:hover {
+  background: #2980b9;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+}
+</style>

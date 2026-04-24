@@ -9,24 +9,24 @@
       Nenhuma anotação encontrada.
     </div>
 
-    <ul>
-      <li v-for="note in notes" :key="note.id">
-        <strong>{{ note.title }}</strong>
+    <div class="notes-grid">
+      <div class="note-card" v-for="note in notes" :key="note.id">
+        <h3>{{ note.title }}</h3>
         <p>{{ note.content }}</p>
 
-        <div>
-          <button @click="editNote(note)">
+        <div class="actions">
+          <button @click="editNote(note)" class="edit-btn">
             Editar
           </button>
 
-          <button @click="deleteNote(note.id)">
+          <button @click="deleteNote(note.id)" class="delete-btn">
             Excluir
           </button>
         </div>
-      </li>
-    </ul>
+      </div>
+    </div>
 
-    <div v-if="totalPages > 1">
+    <div class="pagination" v-if="totalPages > 1">
       <button
         :disabled="currentPage === 1"
         @click="changePage(currentPage - 1)"
@@ -107,3 +107,42 @@ defineExpose({
   fetchNotes
 })
 </script>
+
+<style scoped>
+.notes-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.note-card {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.edit-btn {
+  background: #f1c40f;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+}
+</style>

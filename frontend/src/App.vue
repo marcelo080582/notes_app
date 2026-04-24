@@ -1,14 +1,12 @@
 <template>
-  <main>
-    <h1>Sistema de Anotações</h1>
+  <main class="container">
+    <h1>Anotações</h1>
 
     <NoteForm
       :note="selectedNote"
       @note-created="refreshNotes"
       @note-updated="handleUpdated"
     />
-
-    <hr />
 
     <NoteList
       ref="noteListRef"
@@ -38,3 +36,21 @@ const handleUpdated = () => {
   refreshNotes()
 }
 </script>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+}
+</style>
