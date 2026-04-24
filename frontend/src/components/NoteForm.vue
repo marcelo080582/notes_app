@@ -5,22 +5,47 @@
     <form @submit.prevent="handleSubmit">
       <div class="form-group">
         <label>Título</label>
-        <input v-model="title" type="text" />
-        <span class="error" v-if="errors.title">{{ errors.title }}</span>
+
+        <input
+          v-model="title"
+          type="text"
+          :disabled="loading"
+        />
+
+        <span class="error" v-if="errors.title">
+          {{ errors.title }}
+        </span>
       </div>
 
       <div class="form-group">
         <label>Conteúdo</label>
-        <textarea v-model="content"></textarea>
-        <span class="error" v-if="errors.content">{{ errors.content }}</span>
+
+        <textarea
+          v-model="content"
+          :disabled="loading"
+        ></textarea>
+
+        <span class="error" v-if="errors.content">
+          {{ errors.content }}
+        </span>
       </div>
 
-      <button type="submit" class="primary-btn">
-        {{ note ? 'Atualizar' : 'Salvar' }}
+      <button
+        type="submit"
+        class="primary-btn"
+        :disabled="loading"
+      >
+        {{ loading ? 'Salvando...' : note ? 'Atualizar' : 'Salvar' }}
       </button>
     </form>
 
-    <p class="error" v-if="apiError">{{ apiError }}</p>
+    <p class="error" v-if="apiError">
+      {{ apiError }}
+    </p>
+
+    <p class="success" v-if="successMessage">
+      {{ successMessage }}
+    </p>
   </div>
 </template>
 
@@ -41,10 +66,16 @@ const title = ref('')
 const content = ref('')
 const errors = ref({})
 const apiError = ref(null)
+const successMessage = ref(null)
+const loading = ref(false)
 
 watch(
   () => props.note,
   (newNote) => {
+    errors.value = {}
+    apiError.value = null
+    successMessage.value = null
+
     if (newNote) {
       title.value = newNote.title
       content.value = newNote.content || ''
@@ -55,6 +86,12 @@ watch(
   },
   { immediate: true }
 )
+
+watch([title, content], () => {
+  errors.value = {}
+  apiError.value = null
+  successMessage.value = null
+})
 
 const validate = () => {
   errors.value = {}
@@ -72,8 +109,24 @@ const validate = () => {
   return Object.keys(errors.value).length === 0
 }
 
+const handleApiError = (error) => {
+  const apiErrors = error.response?.data?.errors
+
+  if (Array.isArray(apiErrors)) {
+    apiError.value = apiErrors.join(', ')
+  } else if (typeof apiErrors === 'object') {
+    apiError.value = Object.values(apiErrors).flat().join(', ')
+  } else {
+    apiError.value = 'Erro ao salvar nota.'
+  }
+}
+
 const handleSubmit = async () => {
   if (!validate()) return
+
+  loading.value = true
+  apiError.value = null
+  successMessage.value = null
 
   try {
     if (props.note) {
@@ -84,6 +137,7 @@ const handleSubmit = async () => {
         }
       })
 
+      successMessage.value = 'Nota atualizada com sucesso.'
       emit('note-updated')
     } else {
       await api.post('/notes', {
@@ -93,15 +147,17 @@ const handleSubmit = async () => {
         }
       })
 
+      successMessage.value = 'Nota criada com sucesso.'
       emit('note-created')
     }
 
     title.value = ''
     content.value = ''
     errors.value = {}
-    apiError.value = null
   } catch (error) {
-    apiError.value = 'Erro ao salvar nota.'
+    handleApiError(error)
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -123,6 +179,11 @@ textarea {
   width: 100%;
   padding: 8px;
   margin-top: 5px;
+  box-sizing: border-box;
+}
+
+textarea {
+  min-height: 100px;
 }
 
 .primary-btn {
@@ -134,12 +195,24 @@ textarea {
   width: 100%;
 }
 
-.primary-btn:hover {
+.primary-btn:hover:not(:disabled) {
   background: #2980b9;
+}
+
+.primary-btn:disabled,
+input:disabled,
+textarea:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .error {
   color: red;
+  font-size: 14px;
+}
+
+.success {
+  color: green;
   font-size: 14px;
 }
 </style>
