@@ -25,6 +25,8 @@
 import { ref } from 'vue'
 import api from '../services/api'
 
+const emit = defineEmits(['note-created'])
+
 const title = ref('')
 const content = ref('')
 const errors = ref({})
@@ -60,6 +62,8 @@ const handleSubmit = async () => {
     title.value = ''
     content.value = ''
     apiError.value = null
+
+    emit('note-created')
 
     alert('Nota criada com sucesso!')
   } catch (error) {
