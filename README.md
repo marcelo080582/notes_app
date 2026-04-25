@@ -128,16 +128,29 @@ http://localhost:5173
 
 ## 🧪 Rodando testes
 
-### Sem Docker
+### Backend sem Docker
 
 ```bash
 bundle exec rspec
 ```
 
-### Com Docker
+### Backend com Docker
 
 ```bash
 docker compose exec backend bundle exec rspec
+```
+
+### Frontend sem Docker
+
+```bash
+cd frontend
+npm run test
+```
+
+### Frontend com Docker
+
+```bash
+docker compose exec frontend npm run test
 ```
 
 ---
