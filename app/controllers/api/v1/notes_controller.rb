@@ -1,9 +1,9 @@
 class Api::V1::NotesController < ApplicationController
   def index
-    notes = Note.all
-    notes = filter_by_search(notes)
-
-    notes = notes.order(created_at: :desc).page(params[:page]).per(20)
+    notes = Note.search_by_term(params[:q])
+                .order(created_at: :desc)
+                .page(params[:page])
+                .per(20)
 
     render json: {
       notes: notes,
@@ -42,18 +42,6 @@ class Api::V1::NotesController < ApplicationController
 
   def note_params
     params.require(:note).permit(:title, :content)
-  end
-
-  def filter_by_search(notes)
-    return notes if params[:q].blank?
-
-    sanitized_query = ActiveRecord::Base.sanitize_sql_like(params[:q])
-    search_term = "%#{sanitized_query}%"
-
-    notes.where(
-      'unaccent(title) ILIKE unaccent(:search) OR unaccent(content) ILIKE unaccent(:search)',
-      search: search_term
-    )
   end
 
   def pagination_meta(notes)

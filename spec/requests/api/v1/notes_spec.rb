@@ -13,6 +13,52 @@ RSpec.describe 'Api::V1::Notes', type: :request do
       expect(json['notes'].size).to eq(20)
       expect(json['meta']['total_count']).to eq(25)
     end
+
+    context 'when searching notes' do
+      let!(:motor_note) do
+        create(:note, title: 'Motor danificado', content: 'Problema no veículo')
+      end
+
+      let!(:pintura_note) do
+        create(:note, title: 'Pintura', content: 'Serviço de pintura automotiva')
+      end
+
+      let!(:cafe_note) do
+        create(:note, title: 'Café da manhã', content: 'Anotação com acento')
+      end
+
+      it 'returns notes matching the title' do
+        get '/api/v1/notes', params: { q: 'motor' }
+
+        json = JSON.parse(response.body)
+        titles = json['notes'].map { |note| note['title'] }
+
+        expect(response).to have_http_status(:ok)
+        expect(titles).to include('Motor danificado')
+        expect(titles).not_to include('Pintura')
+      end
+
+      it 'returns notes matching the content' do
+        get '/api/v1/notes', params: { q: 'pintura' }
+
+        json = JSON.parse(response.body)
+        titles = json['notes'].map { |note| note['title'] }
+
+        expect(response).to have_http_status(:ok)
+        expect(titles).to include('Pintura')
+        expect(titles).not_to include('Motor danificado')
+      end
+
+      it 'returns notes ignoring accents' do
+        get '/api/v1/notes', params: { q: 'cafe' }
+
+        json = JSON.parse(response.body)
+        titles = json['notes'].map { |note| note['title'] }
+
+        expect(response).to have_http_status(:ok)
+        expect(titles).to include('Café da manhã')
+      end
+    end
   end
 
   describe 'POST /api/v1/notes' do
