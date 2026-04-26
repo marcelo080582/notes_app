@@ -92,6 +92,22 @@ RSpec.describe 'Api::V1::Notes', type: :request do
       expect(response).to have_http_status(:ok)
       expect(note.reload.title).to eq('Atualizado')
     end
+
+    context 'when note does not exist' do
+      it 'returns not found' do
+        patch '/api/v1/notes/999999', params: {
+          note: {
+            title: 'Título atualizado',
+            content: 'Conteúdo atualizado'
+          }
+        }
+
+        json = JSON.parse(response.body)
+
+        expect(response).to have_http_status(:not_found)
+        expect(json['error']).to eq('Nota não encontrada')
+      end
+    end
   end
 
   describe 'DELETE /api/v1/notes/:id' do
@@ -103,6 +119,17 @@ RSpec.describe 'Api::V1::Notes', type: :request do
       }.to change(Note, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
+    end
+
+    context 'when note does not exist' do
+      it 'returns not found' do
+        delete '/api/v1/notes/999999'
+
+        json = JSON.parse(response.body)
+
+        expect(response).to have_http_status(:not_found)
+        expect(json['error']).to eq('Nota não encontrada')
+      end
     end
   end
 end
