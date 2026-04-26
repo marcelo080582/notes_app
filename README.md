@@ -238,7 +238,6 @@ http://localhost:3000/api/v1/notes?q=carro
 ## 📈 Possíveis melhorias
 
 - Autenticação de usuários
-- Testes no frontend
 - UI mais refinada com Tailwind ou outro design system
 - Filtros avançados e ordenação
 - Deploy em produção
