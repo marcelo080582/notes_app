@@ -10,7 +10,7 @@ RSpec.describe 'Api::V1::Notes', type: :request do
       json = JSON.parse(response.body)
 
       expect(response).to have_http_status(:ok)
-      expect(json['notes'].size).to eq(20)
+      expect(json['notes'].size).to eq(5)
       expect(json['meta']['total_count']).to eq(25)
     end
 

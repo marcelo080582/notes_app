@@ -9,8 +9,10 @@
         <input
           v-model="title"
           type="text"
+          maxlength="100"
           :disabled="loading"
         />
+        <small>{{ title.length }}/100</small>
 
         <span class="error" v-if="errors.title">
           {{ errors.title }}
@@ -22,8 +24,10 @@
 
         <textarea
           v-model="content"
+           maxlength="1000"
           :disabled="loading"
         ></textarea>
+        <small>{{ content.length }}/1000</small>
 
         <span class="error" v-if="errors.content">
           {{ errors.content }}

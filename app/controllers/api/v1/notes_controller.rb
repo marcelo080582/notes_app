@@ -7,7 +7,7 @@ class Api::V1::NotesController < ApplicationController
     notes = Note.search_by_term(params[:q])
                 .order(created_at: :desc)
                 .page(params[:page])
-                .per(20)
+                .per(5)
 
     render json: {
       notes: notes,

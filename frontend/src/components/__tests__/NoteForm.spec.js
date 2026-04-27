@@ -85,4 +85,16 @@ describe('NoteForm', () => {
 
     expect(wrapper.emitted('note-updated')).toBeTruthy()
   })
+
+  it('sets max length for title field', () => {
+    const wrapper = mount(NoteForm)
+
+    expect(wrapper.find('input').attributes('maxlength')).toBe('100')
+  })
+
+  it('sets max length for content field', () => {
+    const wrapper = mount(NoteForm)
+
+    expect(wrapper.find('textarea').attributes('maxlength')).toBe('1000')
+  })
 })
