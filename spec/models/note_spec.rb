@@ -1,42 +1,49 @@
 require 'rails_helper'
 
 RSpec.describe Note, type: :model do
+  let(:user) { create(:user) }
+
   it 'is valid with title and content' do
-    note = Note.new(title: 'Título', content: 'Conteúdo')
+    note = Note.new(title: 'Título', content: 'Conteúdo', user: user)
+
     expect(note).to be_valid
   end
 
   it 'is valid without content' do
-    note = Note.new(title: 'Título')
+    note = Note.new(title: 'Título', user: user)
+
     expect(note).to be_valid
   end
 
   it 'is invalid without title' do
-    note = Note.new(title: nil)
+    note = Note.new(title: nil, user: user)
+
     expect(note).not_to be_valid
   end
 
   it 'is invalid when title is too long' do
-    note = Note.new(title: 'a' * 101)
+    note = Note.new(title: 'a' * 101, user: user)
+
     expect(note).not_to be_valid
   end
 
   it 'is invalid when content is too long' do
-    note = Note.new(title: 'Título', content: 'a' * 1001)
+    note = Note.new(title: 'Título', content: 'a' * 1001, user: user)
+
     expect(note).not_to be_valid
   end
 
   describe '.search_by_term' do
     let!(:motor_note) do
-      create(:note, title: 'Motor', content: 'Problema')
+      create(:note, title: 'Motor', content: 'Problema', user: user)
     end
 
     let!(:pintura_note) do
-      create(:note, title: 'Pintura', content: 'Serviço')
+      create(:note, title: 'Pintura', content: 'Serviço', user: user)
     end
 
     let!(:cafe_note) do
-      create(:note, title: 'Café', content: 'Anotação com acento')
+      create(:note, title: 'Café', content: 'Anotação com acento', user: user)
     end
 
     it 'returns notes matching the title' do

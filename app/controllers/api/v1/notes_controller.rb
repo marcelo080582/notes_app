@@ -16,12 +16,12 @@ class Api::V1::NotesController < ApplicationController
   end
 
   def create
-    note = Note.new(note_params)
+    note = current_user.notes.new(note_params)
 
     if note.save
       render json: note, status: :created
     else
-      render json: { errors: note.errors.full_messages }, status: :unprocessable_entity
+      render json: { errors: note.errors.full_messages }, status: :unprocessable_content
     end
   end
 
@@ -29,7 +29,7 @@ class Api::V1::NotesController < ApplicationController
     if @note.update(note_params)
       render json: @note
     else
-      render json: { errors: @note.errors.full_messages }, status: :unprocessable_entity
+      render json: { errors: @note.errors.full_messages }, status: :unprocessable_content
     end
   end
 
