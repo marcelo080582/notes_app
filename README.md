@@ -14,11 +14,13 @@ Permite criar, listar, editar, excluir e buscar anotações, com foco em boas pr
 - RSpec
 - FactoryBot
 - Kaminari (paginação)
+- JWT (autenticação)
 
 ### Frontend
 - Vue 3
 - Vite
 - Axios
+- Vitest + Vue Test Utils
 
 ### Infra
 - Docker
@@ -28,15 +30,26 @@ Permite criar, listar, editar, excluir e buscar anotações, com foco em boas pr
 
 ## 📦 Funcionalidades
 
+### 🔐 Autenticação
+- Cadastro de usuário
+- Login com JWT
+- Proteção de rotas
+- Cada usuário acessa apenas suas próprias notas
+
+### 📝 Notas
 - Criar anotação
 - Listar anotações com paginação (20 por página)
 - Editar anotação
 - Excluir anotação
-- Buscar anotações por título e conteúdo
-- Busca com suporte a acentos
-- Validação no frontend e backend
-- Feedback visual (loading, sucesso e erro)
-- Layout responsivo básico
+- Buscar por título e conteúdo
+- Busca com suporte a acentos (`unaccent`)
+
+### 🎯 UX
+- Loading states
+- Feedback de erro e sucesso
+- Debounce na busca
+- Contador de caracteres
+- Layout responsivo
 
 ---
 
@@ -155,6 +168,31 @@ docker compose exec frontend npm run test
 
 ---
 
+## 🔐 Autenticação
+
+A API utiliza JWT.
+
+Resposta após login/cadastro:
+
+```json
+{
+  "token": "jwt_token",
+  "user": { ... }
+}
+```
+
+Header enviado pelo frontend:
+
+```text
+Authorization: Bearer <token>
+```
+
+Regras:
+- Rotas protegidas
+- Usuário acessa apenas suas próprias notas
+
+---
+
 ## 📌 Estrutura do projeto
 
 ```text
@@ -181,6 +219,15 @@ http://localhost:3000/api/v1
 
 ### Endpoints
 
+### Autenticação
+
+| Método | Rota        | Descrição                              |
+|--------|------------|-----------------------------------------|
+| POST   | /login     | Acesso ao sistema                       |
+| POST   | /register  | Cadastrar usuário                       |
+
+### Notas
+
 | Método | Rota        | Descrição                              |
 |--------|------------|-----------------------------------------|
 | GET    | /notes     | Listar notas com busca opcional `q`     |
@@ -201,12 +248,16 @@ http://localhost:3000/api/v1/notes?q=carro
 - **Separação de responsabilidades**
   Backend e frontend desacoplados, permitindo evolução independente.
 
+- **Autenticação com JWT**
+  Simples, stateless e adequada para APIs.
+
 - **Uso de Axios para comunicação com API**
   Centralização das requisições em uma camada de serviço no frontend.
 
 - **Componentização no Vue**
   - `NoteForm`: responsável por criação e edição.
   - `NoteList`: responsável pela listagem, busca, paginação e ações.
+  - `Auth (Login/Register)`: responsável pelo cadastro do usuário e pelo acesso ao sistema
 
 - **Reutilização de componente**
   O `NoteForm` é utilizado tanto para criação quanto para edição, evitando duplicação de código.
@@ -237,7 +288,7 @@ http://localhost:3000/api/v1/notes?q=carro
 
 ## 📈 Possíveis melhorias
 
-- Autenticação de usuários
+- Refresh token / expiração de sessão
 - UI mais refinada com Tailwind ou outro design system
 - Filtros avançados e ordenação
 - Deploy em produção
