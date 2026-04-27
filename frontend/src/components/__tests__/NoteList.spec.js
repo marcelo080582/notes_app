@@ -60,7 +60,7 @@ describe('NoteList', () => {
 
     await new Promise(resolve => setTimeout(resolve, 500))
 
-    expect(api.get).toHaveBeenLastCalledWith('/notes', {
+    expect(api.get).toHaveBeenLastCalledWith('/api/v1/notes', {
       params: { page: 1, q: 'motor' }
     })
   })
@@ -100,6 +100,6 @@ describe('NoteList', () => {
 
     await wrapper.find('.delete-btn').trigger('click')
 
-    expect(api.delete).toHaveBeenCalledWith('/notes/1')
+    expect(api.delete).toHaveBeenCalledWith('/api/v1/notes/1')
   })
 })

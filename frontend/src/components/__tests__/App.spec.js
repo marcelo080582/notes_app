@@ -1,76 +1,101 @@
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import App from '../../App.vue'
-import api from '../../services/api'
+import * as authService from '../../services/auth'
 
-vi.mock('../../services/api', () => ({
-  default: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn()
-  }
+vi.mock('../../services/auth', () => ({
+  getCurrentUser: vi.fn(),
+  isAuthenticated: vi.fn(),
+  logout: vi.fn()
 }))
 
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
 
-    window.scrollTo = vi.fn()
-
-    api.get.mockResolvedValue({
-      data: {
-        notes: [
-          {
-            id: 1,
-            title: 'Nota para editar',
-            content: 'Conteúdo da nota'
+  const mountApp = () => {
+    return mount(App, {
+      global: {
+        stubs: {
+          LoginForm: {
+            emits: ['authenticated', 'change-mode'],
+            template: `
+              <button
+                data-test="login-form"
+                @click="$emit('change-mode')"
+              >
+                Login
+              </button>
+            `
+          },
+          RegisterForm: {
+            emits: ['authenticated', 'change-mode'],
+            template: '<div data-test="register-form">Register</div>'
+          },
+          NoteForm: {
+            emits: ['note-created', 'note-updated'],
+            template: '<div data-test="note-form">NoteForm</div>'
+          },
+          NoteList: {
+            emits: ['edit-note'],
+            template: '<div data-test="note-list">NoteList</div>'
           }
-        ],
-        meta: {
-          current_page: 1,
-          total_pages: 1,
-          total_count: 1
         }
       }
     })
-  })
+  }
 
-  it('renders the application title', async () => {
-    const wrapper = mount(App)
+  it('shows login form when user is not authenticated', async () => {
+    authService.isAuthenticated.mockReturnValue(false)
 
+    const wrapper = mountApp()
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Anotações')
+    expect(wrapper.find('[data-test="login-form"]').exists()).toBe(true)
   })
 
-  it('selects a note for editing when edit button is clicked', async () => {
-    const wrapper = mount(App)
+  it('shows register form when changing auth mode', async () => {
+    authService.isAuthenticated.mockReturnValue(false)
 
+    const wrapper = mountApp()
     await flushPromises()
 
-    await wrapper.find('.edit-btn').trigger('click')
+    await wrapper.find('[data-test="login-form"]').trigger('click')
 
-    expect(wrapper.text()).toContain('Editar Nota')
-    expect(wrapper.text()).toContain('Editando: Nota para editar')
-    expect(wrapper.find('input').element.value).toBe('Nota para editar')
-    expect(wrapper.find('textarea').element.value).toBe('Conteúdo da nota')
+    expect(wrapper.find('[data-test="register-form"]').exists()).toBe(true)
   })
 
-  it('cancels editing mode', async () => {
-    const wrapper = mount(App)
+  it('shows notes when user is authenticated', async () => {
+    authService.isAuthenticated.mockReturnValue(true)
+    authService.getCurrentUser.mockReturnValue({
+      id: 1,
+      name: 'Marcelo',
+      email: 'marcelo@email.com'
+    })
 
+    const wrapper = mountApp()
     await flushPromises()
 
-    await wrapper.find('.edit-btn').trigger('click')
+    expect(wrapper.text()).toContain('Olá, Marcelo')
+    expect(wrapper.find('[data-test="note-form"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="note-list"]').exists()).toBe(true)
+  })
 
-    expect(wrapper.text()).toContain('Editando: Nota para editar')
+  it('logs out user', async () => {
+    authService.isAuthenticated.mockReturnValue(true)
+    authService.getCurrentUser.mockReturnValue({
+      id: 1,
+      name: 'Marcelo',
+      email: 'marcelo@email.com'
+    })
 
-    await wrapper.find('.editing-info button').trigger('click')
+    const wrapper = mountApp()
+    await flushPromises()
 
-    expect(wrapper.text()).toContain('Criar Nota')
-    expect(wrapper.text()).not.toContain('Editando: Nota para editar')
-    expect(wrapper.find('input').element.value).toBe('')
-    expect(wrapper.find('textarea').element.value).toBe('')
+    await wrapper.find('.user-info button').trigger('click')
+
+    expect(authService.logout).toHaveBeenCalled()
+    expect(wrapper.find('[data-test="login-form"]').exists()).toBe(true)
   })
 })

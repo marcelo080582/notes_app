@@ -1,6 +1,9 @@
 <template>
   <div class="notes-section">
-    <h2>Anotações</h2>
+    <div class="section-header">
+      <h2>Anotações</h2>
+      <span>{{ notes.length }} encontradas</span>
+    </div>
 
     <div class="search-box">
       <label for="search">Pesquisar notas</label>
@@ -15,25 +18,28 @@
 
     <p class="loading" v-if="loading">Carregando anotações...</p>
 
-    <p class="error" v-if="error">
+    <p class="error message" v-if="error">
       {{ error }}
     </p>
 
-    <p class="success" v-if="successMessage">
+    <p class="success message" v-if="successMessage">
       {{ successMessage }}
     </p>
 
-    <div class="empty-state" v-if="notes.length === 0 && !loading">
+    <div class="empty-state" v-if="notes.length === 0 && !loading && !error">
       Nenhuma anotação encontrada.
     </div>
 
     <div class="notes-grid">
       <div class="note-card" v-for="note in notes" :key="note.id">
-        <h3>{{ note.title }}</h3>
-        <p>{{ note.content || 'Sem conteúdo.' }}</p>
+        <div class="note-content">
+          <h3>{{ note.title }}</h3>
+          <p>{{ note.content || 'Sem conteúdo.' }}</p>
+        </div>
 
         <div class="actions">
           <button
+            type="button"
             @click="editNote(note)"
             class="edit-btn"
             :disabled="deletingId === note.id"
@@ -42,6 +48,7 @@
           </button>
 
           <button
+            type="button"
             @click="deleteNote(note.id)"
             class="delete-btn"
             :disabled="deletingId === note.id"
@@ -54,6 +61,7 @@
 
     <div class="pagination" v-if="totalPages > 1">
       <button
+        type="button"
         :disabled="currentPage === 1 || loading"
         @click="changePage(currentPage - 1)"
       >
@@ -63,6 +71,7 @@
       <span>Página {{ currentPage }} de {{ totalPages }}</span>
 
       <button
+        type="button"
         :disabled="currentPage === totalPages || loading"
         @click="changePage(currentPage + 1)"
       >
@@ -96,7 +105,7 @@ const fetchNotes = async (page = 1) => {
   successMessage.value = null
 
   try {
-    const response = await api.get('/notes', {
+    const response = await api.get('/api/v1/notes', {
       params: {
         page,
         q: search.value
@@ -107,7 +116,11 @@ const fetchNotes = async (page = 1) => {
     currentPage.value = response.data.meta.current_page
     totalPages.value = response.data.meta.total_pages
   } catch (e) {
-    error.value = 'Erro ao carregar anotações.'
+    if (e.response?.status === 401) {
+      error.value = 'Sua sessão expirou. Faça login novamente.'
+    } else {
+      error.value = 'Erro ao carregar anotações.'
+    }
   } finally {
     loading.value = false
   }
@@ -141,7 +154,7 @@ const deleteNote = async (id) => {
   successMessage.value = null
 
   try {
-    await api.delete(`/notes/${id}`)
+    await api.delete(`/api/v1/notes/${id}`)
 
     successMessage.value = 'Nota excluída com sucesso.'
 
@@ -154,7 +167,11 @@ const deleteNote = async (id) => {
 
     await fetchNotes(nextPage)
   } catch (e) {
-    error.value = 'Erro ao excluir anotação.'
+    if (e.response?.status === 404) {
+      error.value = 'Nota não encontrada.'
+    } else {
+      error.value = 'Erro ao excluir anotação.'
+    }
   } finally {
     deletingId.value = null
   }
@@ -171,52 +188,94 @@ defineExpose({
 
 <style scoped>
 .notes-section {
-  margin-top: 20px;
+  margin-top: 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #111827;
+}
+
+.section-header span {
+  color: #6b7280;
+  font-size: 14px;
 }
 
 .search-box {
   background: white;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .search-box label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: bold;
+  color: #374151;
 }
 
 .search-box input {
   width: 100%;
-  padding: 8px;
+  padding: 10px 12px;
   box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 
 .notes-grid {
   display: grid;
-  gap: 15px;
+  gap: 16px;
 }
 
 .note-card {
   background: white;
-  padding: 15px;
-  border-radius: 8px;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.note-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .note-card h3 {
-  margin-top: 0;
+  margin: 0 0 8px;
+  color: #111827;
   word-break: break-word;
 }
 
 .note-card p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.5;
   word-break: break-word;
 }
 
 .actions {
-  margin-top: 10px;
   display: flex;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .edit-btn,
@@ -225,16 +284,26 @@ defineExpose({
   border: none;
   padding: 8px 12px;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
+  font-weight: bold;
 }
 
 .edit-btn {
-  background: #f1c40f;
+  background: #facc15;
+  color: #422006;
+}
+
+.edit-btn:hover:not(:disabled) {
+  background: #eab308;
 }
 
 .delete-btn {
-  background: #e74c3c;
+  background: #dc2626;
   color: white;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #b91c1c;
 }
 
 button:disabled {
@@ -243,7 +312,7 @@ button:disabled {
 }
 
 .pagination {
-  margin-top: 20px;
+  margin-top: 22px;
   display: flex;
   justify-content: center;
   gap: 12px;
@@ -251,24 +320,60 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.pagination button {
+  background: #2563eb;
+  color: white;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
 .loading {
-  color: #555;
+  color: #6b7280;
+}
+
+.message {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .error {
-  color: red;
-  font-size: 14px;
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .success {
-  color: green;
-  font-size: 14px;
+  background: #f0fdf4;
+  color: #15803d;
 }
 
 .empty-state {
   background: white;
-  padding: 15px;
-  border-radius: 8px;
-  color: #555;
+  padding: 20px;
+  border-radius: 12px;
+  color: #6b7280;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 700px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .note-card {
+    flex-direction: column;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions button {
+    flex: 1;
+  }
 }
 </style>

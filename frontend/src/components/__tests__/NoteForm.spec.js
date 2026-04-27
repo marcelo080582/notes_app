@@ -6,7 +6,7 @@ import api from '../../services/api'
 vi.mock('../../services/api', () => ({
   default: {
     post: vi.fn(),
-    put: vi.fn()
+    patch: vi.fn()
   }
 }))
 
@@ -33,7 +33,7 @@ describe('NoteForm', () => {
     await wrapper.find('textarea').setValue('Conteúdo da nota')
     await wrapper.find('form').trigger('submit.prevent')
 
-    expect(api.post).toHaveBeenCalledWith('/notes', {
+    expect(api.post).toHaveBeenCalledWith('/api/v1/notes', {
       note: {
         title: 'Minha nota',
         content: 'Conteúdo da nota'
@@ -60,7 +60,7 @@ describe('NoteForm', () => {
   })
 
   it('updates a note successfully', async () => {
-    api.put.mockResolvedValue({ data: { id: 1 } })
+    api.patch.mockResolvedValue({ data: { id: 1 } })
 
     const wrapper = mount(NoteForm, {
       props: {
@@ -76,7 +76,7 @@ describe('NoteForm', () => {
     await wrapper.find('textarea').setValue('Conteúdo atualizado')
     await wrapper.find('form').trigger('submit.prevent')
 
-    expect(api.put).toHaveBeenCalledWith('/notes/1', {
+    expect(api.patch).toHaveBeenCalledWith('/api/v1/notes/1', {
       note: {
         title: 'Nota atualizada',
         content: 'Conteúdo atualizado'
