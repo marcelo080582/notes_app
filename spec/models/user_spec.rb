@@ -91,6 +91,17 @@ RSpec.describe User, type: :model do
     expect(user).not_to be_valid
   end
 
+  it 'downcases email before saving' do
+    user = User.create!(
+      name: 'Marcelo',
+      email: 'MARCELO@EMAIL.COM',
+      password: '123456',
+      password_confirmation: '123456'
+    )
+
+    expect(user.email).to eq('marcelo@email.com')
+  end
+
   it 'has many notes' do
     association = described_class.reflect_on_association(:notes)
 

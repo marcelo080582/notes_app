@@ -13,4 +13,12 @@ class User < ApplicationRecord
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
   validates :password, length: { minimum: 6 }, if: -> { password.present? }
+
+  before_save :downcase_email
+
+  private
+
+  def downcase_email
+    self.email = email.downcase
+  end
 end

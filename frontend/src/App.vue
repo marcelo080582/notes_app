@@ -81,6 +81,7 @@ const handleLogout = () => {
   logout()
   user.value = null
   selectedNote.value = null
+  authMode.value = 'login'
 }
 
 const refreshNotes = () => {
