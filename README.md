@@ -38,7 +38,7 @@ Permite criar, listar, editar, excluir e buscar anotações, com foco em boas pr
 
 ### 📝 Notas
 - Criar anotação
-- Listar anotações com paginação (20 por página)
+- Listar anotações com paginação (5 por página)
 - Editar anotação
 - Excluir anotação
 - Buscar por título e conteúdo

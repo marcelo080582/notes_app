@@ -34,6 +34,28 @@ RSpec.describe User, type: :model do
     expect(user).not_to be_valid
   end
 
+  it 'is invalid with invalid email format' do
+    user = User.new(
+      name: 'Marcelo',
+      email: 'email_invalido',
+      password: '123456',
+      password_confirmation: '123456'
+    )
+
+    expect(user).not_to be_valid
+  end
+
+  it 'is valid with valid email format' do
+    user = User.new(
+      name: 'Marcelo',
+      email: 'marcelo@email.com',
+      password: '123456',
+      password_confirmation: '123456'
+    )
+
+    expect(user).to be_valid
+  end
+
   it 'is invalid with duplicated email' do
     create(:user, email: 'marcelo@email.com')
 

@@ -49,6 +49,28 @@ describe('LoginForm', () => {
     })
   })
 
+  it('shows error when email is invalid', async () => {
+    const wrapper = mount(LoginForm)
+
+    await wrapper.find('input[type="email"]').setValue('email_invalido')
+    await wrapper.find('input[type="password"]').setValue('123456')
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.text()).toContain('Email inválido.')
+    expect(authService.login).not.toHaveBeenCalled()
+  })
+
+  it('shows error when password is blank', async () => {
+    const wrapper = mount(LoginForm)
+
+    await wrapper.find('input[type="email"]').setValue('marcelo@email.com')
+    await wrapper.find('input[type="password"]').setValue('')
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.text()).toContain('Senha é obrigatória.')
+    expect(authService.login).not.toHaveBeenCalled()
+  })
+
   it('shows error message when login fails', async () => {
     authService.login.mockRejectedValue(new Error('Invalid credentials'))
 

@@ -24,6 +24,22 @@ RSpec.describe 'Api::V1::Notes', type: :request do
       expect(json['meta']['total_count']).to eq(25)
     end
 
+    it 'returns only notes from authenticated user' do
+      other_user = create(:user)
+
+      user_note = create(:note, title: 'Minha nota', user: user)
+      create(:note, title: 'Nota de outro usuário', user: other_user)
+
+      get '/api/v1/notes', headers: headers
+
+      json = JSON.parse(response.body)
+      titles = json['notes'].map { |note| note['title'] }
+
+      expect(response).to have_http_status(:ok)
+      expect(titles).to include(user_note.title)
+      expect(titles).not_to include('Nota de outro usuário')
+    end
+
     context 'when searching notes' do
       let!(:motor_note) do
         create(:note, title: 'Motor danificado', content: 'Problema no veículo', user: user)
@@ -72,15 +88,17 @@ RSpec.describe 'Api::V1::Notes', type: :request do
   end
 
   describe 'POST /api/v1/notes' do
-    it 'creates a note' do
+    it 'creates a note for authenticated user' do
       expect {
-        post '/api/v1/notes', params: {
-          note: { title: 'Nova nota', content: 'Conteúdo' }
-        },
-        headers: headers
+        post '/api/v1/notes',
+             params: {
+               note: { title: 'Nova nota', content: 'Conteúdo' }
+             },
+             headers: headers
       }.to change(Note, :count).by(1)
 
       expect(response).to have_http_status(:created)
+      expect(Note.last.user).to eq(user)
     end
 
     it 'returns validation errors' do
@@ -94,7 +112,7 @@ RSpec.describe 'Api::V1::Notes', type: :request do
   end
 
   describe 'PATCH /api/v1/notes/:id' do
-    it 'updates a note' do
+    it 'updates a note from authenticated user' do
       note = create(:note, title: 'Antigo', user: user)
 
       patch "/api/v1/notes/#{note.id}", params: {
@@ -104,6 +122,19 @@ RSpec.describe 'Api::V1::Notes', type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(note.reload.title).to eq('Atualizado')
+    end
+
+    it 'does not update note from another user' do
+      other_user = create(:user)
+      note = create(:note, title: 'Nota de outro usuário', user: other_user)
+
+      patch "/api/v1/notes/#{note.id}", params: {
+        note: { title: 'Tentativa de alteração' }
+      },
+      headers: headers
+
+      expect(response).to have_http_status(:not_found)
+      expect(note.reload.title).to eq('Nota de outro usuário')
     end
 
     context 'when note does not exist' do
@@ -125,7 +156,7 @@ RSpec.describe 'Api::V1::Notes', type: :request do
   end
 
   describe 'DELETE /api/v1/notes/:id' do
-    it 'deletes a note' do
+    it 'deletes a note from authenticated user' do
       note = create(:note, user: user)
 
       expect {
@@ -133,6 +164,17 @@ RSpec.describe 'Api::V1::Notes', type: :request do
       }.to change(Note, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
+    end
+
+    it 'does not delete note from another user' do
+      other_user = create(:user)
+      note = create(:note, user: other_user)
+
+      expect {
+        delete "/api/v1/notes/#{note.id}", headers: headers
+      }.not_to change(Note, :count)
+
+      expect(response).to have_http_status(:not_found)
     end
 
     context 'when note does not exist' do
@@ -158,9 +200,9 @@ RSpec.describe 'Api::V1::Notes', type: :request do
     end
 
     it 'returns unauthorized with invalid token' do
-      headers = { 'Authorization' => 'Bearer invalid_token' }
+      invalid_headers = { 'Authorization' => 'Bearer invalid_token' }
 
-      get '/api/v1/notes', headers: headers
+      get '/api/v1/notes', headers: invalid_headers
 
       json = JSON.parse(response.body)
 

@@ -4,25 +4,35 @@
     <p class="auth-subtitle">Acesse sua conta para gerenciar suas anotações.</p>
 
     <form @submit.prevent="handleSubmit" class="auth-form">
-      <input
-        v-model="email"
-        type="email"
-        placeholder="Email"
-        required
-      />
+      <div class="field">
+        <input
+          v-model="email"
+          type="email"
+          placeholder="Email"
+        />
 
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Senha"
-        required
-      />
+        <p class="error" v-if="emailError">
+          {{ emailError }}
+        </p>
+      </div>
+
+      <div class="field">
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Senha"
+        />
+
+        <p class="error" v-if="passwordError">
+          {{ passwordError }}
+        </p>
+      </div>
 
       <p class="error" v-if="errorMessage">
         {{ errorMessage }}
       </p>
 
-      <button type="submit" :disabled="loading">
+      <button type="submit" :disabled="loading || !isFormValid">
         {{ loading ? 'Entrando...' : 'Entrar' }}
       </button>
     </form>
@@ -37,7 +47,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { login } from '../services/auth'
 
 const emit = defineEmits(['authenticated', 'change-mode'])
@@ -46,10 +56,60 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
+const emailError = ref('')
+const passwordError = ref('')
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const isFormValid = computed(() => {
+  return emailRegex.test(email.value) && password.value.trim().length > 0
+})
+
+watch(email, (value) => {
+  errorMessage.value = ''
+
+  if (!value.trim()) {
+    emailError.value = ''
+  } else if (!emailRegex.test(value)) {
+    emailError.value = 'Email inválido.'
+  } else {
+    emailError.value = ''
+  }
+})
+
+watch(password, (value) => {
+  errorMessage.value = ''
+
+  if (!value.trim()) {
+    passwordError.value = ''
+  } else {
+    passwordError.value = ''
+  }
+})
+
+function validate() {
+  emailError.value = ''
+  passwordError.value = ''
+
+  if (!email.value.trim()) {
+    emailError.value = 'Email é obrigatório.'
+  } else if (!emailRegex.test(email.value)) {
+    emailError.value = 'Email inválido.'
+  }
+
+  if (!password.value.trim()) {
+    passwordError.value = 'Senha é obrigatória.'
+  }
+
+  return !emailError.value && !passwordError.value
+}
 
 async function handleSubmit() {
-  loading.value = true
   errorMessage.value = ''
+
+  if (!validate()) return
+
+  loading.value = true
 
   try {
     const data = await login({
@@ -89,6 +149,10 @@ async function handleSubmit() {
   gap: 12px;
 }
 
+.field {
+  text-align: left;
+}
+
 .auth-form input {
   width: 100%;
   padding: 11px 12px;
@@ -119,7 +183,7 @@ async function handleSubmit() {
 }
 
 .auth-form button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -143,9 +207,9 @@ async function handleSubmit() {
 .error {
   background: #fef2f2;
   color: #dc2626;
-  padding: 10px;
+  padding: 8px 10px;
   border-radius: 8px;
   font-size: 14px;
-  margin: 0;
+  margin: 6px 0 0;
 }
 </style>

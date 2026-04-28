@@ -4,10 +4,10 @@ class Api::V1::NotesController < ApplicationController
   before_action :set_note, only: [:update, :destroy]
 
   def index
-    notes = Note.search_by_term(params[:q])
-                .order(created_at: :desc)
-                .page(params[:page])
-                .per(5)
+    notes = current_user.notes.search_by_term(params[:q])
+                        .order(created_at: :desc)
+                        .page(params[:page])
+                        .per(5)
 
     render json: {
       notes: notes,
@@ -42,7 +42,7 @@ class Api::V1::NotesController < ApplicationController
   private
 
   def set_note
-    @note = Note.find(params[:id])
+    @note = current_user.notes.find(params[:id])
   end
 
   def note_params

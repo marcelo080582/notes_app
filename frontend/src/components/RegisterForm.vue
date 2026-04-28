@@ -4,39 +4,59 @@
     <p class="auth-subtitle">Preencha os dados para acessar suas anotações.</p>
 
     <form @submit.prevent="handleSubmit" class="auth-form">
-      <input
-        v-model="name"
-        type="text"
-        placeholder="Nome"
-        required
-      />
+      <div class="field">
+        <input
+          v-model="name"
+          type="text"
+          placeholder="Nome"
+        />
 
-      <input
-        v-model="email"
-        type="email"
-        placeholder="Email"
-        required
-      />
+        <p class="error" v-if="nameError">
+          {{ nameError }}
+        </p>
+      </div>
 
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Senha"
-        required
-      />
+      <div class="field">
+        <input
+          v-model="email"
+          type="email"
+          placeholder="Email"
+        />
 
-      <input
-        v-model="passwordConfirmation"
-        type="password"
-        placeholder="Confirmar senha"
-        required
-      />
+        <p class="error" v-if="emailError">
+          {{ emailError }}
+        </p>
+      </div>
+
+      <div class="field">
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Senha"
+        />
+
+        <p class="error" v-if="passwordError">
+          {{ passwordError }}
+        </p>
+      </div>
+
+      <div class="field">
+        <input
+          v-model="passwordConfirmation"
+          type="password"
+          placeholder="Confirmar senha"
+        />
+
+        <p class="error" v-if="passwordConfirmationError">
+          {{ passwordConfirmationError }}
+        </p>
+      </div>
 
       <p class="error" v-if="errorMessage">
         {{ errorMessage }}
       </p>
 
-      <button type="submit" :disabled="loading">
+      <button type="submit" :disabled="loading || !isFormValid">
         {{ loading ? 'Criando conta...' : 'Criar conta' }}
       </button>
     </form>
@@ -51,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { register } from '../services/auth'
 
 const emit = defineEmits(['authenticated', 'change-mode'])
@@ -61,11 +81,116 @@ const email = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
 const loading = ref(false)
+
 const errorMessage = ref('')
+const nameError = ref('')
+const emailError = ref('')
+const passwordError = ref('')
+const passwordConfirmationError = ref('')
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const isFormValid = computed(() => {
+  return (
+    name.value.trim().length > 0 &&
+    emailRegex.test(email.value) &&
+    password.value.length >= 6 &&
+    password.value === passwordConfirmation.value
+  )
+})
+
+watch(name, (value) => {
+  errorMessage.value = ''
+  nameError.value = value.trim() ? '' : ''
+})
+
+watch(email, (value) => {
+  errorMessage.value = ''
+
+  if (!value.trim()) {
+    emailError.value = ''
+  } else if (!emailRegex.test(value)) {
+    emailError.value = 'Email inválido.'
+  } else {
+    emailError.value = ''
+  }
+})
+
+watch(password, (value) => {
+  errorMessage.value = ''
+
+  if (!value) {
+    passwordError.value = ''
+  } else if (value.length < 6) {
+    passwordError.value = 'A senha deve ter pelo menos 6 caracteres.'
+  } else {
+    passwordError.value = ''
+  }
+
+  if (
+    passwordConfirmation.value &&
+    value !== passwordConfirmation.value
+  ) {
+    passwordConfirmationError.value = 'A confirmação de senha não confere.'
+  } else {
+    passwordConfirmationError.value = ''
+  }
+})
+
+watch(passwordConfirmation, (value) => {
+  errorMessage.value = ''
+
+  if (!value) {
+    passwordConfirmationError.value = ''
+  } else if (password.value !== value) {
+    passwordConfirmationError.value = 'A confirmação de senha não confere.'
+  } else {
+    passwordConfirmationError.value = ''
+  }
+})
+
+function validate() {
+  nameError.value = ''
+  emailError.value = ''
+  passwordError.value = ''
+  passwordConfirmationError.value = ''
+
+  if (!name.value.trim()) {
+    nameError.value = 'Nome é obrigatório.'
+  }
+
+  if (!email.value.trim()) {
+    emailError.value = 'Email é obrigatório.'
+  } else if (!emailRegex.test(email.value)) {
+    emailError.value = 'Email inválido.'
+  }
+
+  if (!password.value) {
+    passwordError.value = 'Senha é obrigatória.'
+  } else if (password.value.length < 6) {
+    passwordError.value = 'A senha deve ter pelo menos 6 caracteres.'
+  }
+
+  if (!passwordConfirmation.value) {
+    passwordConfirmationError.value = 'Confirmação de senha é obrigatória.'
+  } else if (password.value !== passwordConfirmation.value) {
+    passwordConfirmationError.value = 'A confirmação de senha não confere.'
+  }
+
+  return (
+    !nameError.value &&
+    !emailError.value &&
+    !passwordError.value &&
+    !passwordConfirmationError.value
+  )
+}
 
 async function handleSubmit() {
-  loading.value = true
   errorMessage.value = ''
+
+  if (!validate()) return
+
+  loading.value = true
 
   try {
     const data = await register({
@@ -107,6 +232,10 @@ async function handleSubmit() {
   gap: 12px;
 }
 
+.field {
+  text-align: left;
+}
+
 .auth-form input {
   width: 100%;
   padding: 11px 12px;
@@ -137,7 +266,7 @@ async function handleSubmit() {
 }
 
 .auth-form button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -161,9 +290,9 @@ async function handleSubmit() {
 .error {
   background: #fef2f2;
   color: #dc2626;
-  padding: 10px;
+  padding: 8px 10px;
   border-radius: 8px;
   font-size: 14px;
-  margin: 0;
+  margin: 6px 0 0;
 }
 </style>

@@ -1,6 +1,13 @@
 class User < ApplicationRecord
   has_secure_password
 
+  VALID_EMAIL_REGEX = URI::MailTo::EMAIL_REGEXP
+
+  validates :email,
+            presence: true,
+            format: { with: VALID_EMAIL_REGEX },
+            uniqueness: true
+
   has_many :notes, dependent: :destroy
 
   validates :name, presence: true
