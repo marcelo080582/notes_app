@@ -27,7 +27,7 @@ class AuthController < ApplicationController
         token: token
       }, status: :ok
     else
-      render json: { error: "Email ou senha inválidos" }, status: :unauthorized
+      render json: { error: 'Email ou senha inválidos' }, status: :unauthorized
     end
   end
 
