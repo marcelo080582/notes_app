@@ -4,7 +4,7 @@ RSpec.describe 'Api::V1::Notes', type: :request do
   let(:user) { create(:user) }
 
   let(:token) do
-    JWT.encode({ user_id: user.id }, Rails.application.credentials.secret_key_base)
+    JWT.encode({ user_id: user.id }, Rails.application.secret_key_base)
   end
 
   let(:headers) do
