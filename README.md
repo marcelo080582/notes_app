@@ -286,6 +286,20 @@ http://localhost:3000/api/v1/notes?q=carro
 
 ---
 
+## CI
+
+O projeto utiliza GitHub Actions para executar validações automáticas em Pull Requests e pushes na branch main.
+
+A pipeline executa:
+
+- Brakeman para análise de segurança Rails
+- Bundler Audit para vulnerabilidades em gems
+- RuboCop para padronização de código
+- Testes automatizados do backend
+- Testes automatizados do frontend
+
+---
+
 ## 📈 Possíveis melhorias
 
 - Refresh token / expiração de sessão
